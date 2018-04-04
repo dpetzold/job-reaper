@@ -7,11 +7,9 @@ Job Reaper
 
 This repo outputs reaps and alerts on finished kubernetes jobs.
 
-Project: [https://github.com/sstarcher/job-reaper]
-(https://github.com/sstarcher/job-reaper)
+Project: [https://github.com/sstarcher/job-reaper](https://github.com/sstarcher/job-reaper)
 
-Docker image: [https://registry.hub.docker.com/u/sstarcher/job-reaper/]
-(https://registry.hub.docker.com/u/sstarcher/job-reaper/)
+Docker image: [https://registry.hub.docker.com/u/sstarcher/job-reaper/](https://registry.hub.docker.com/u/sstarcher/job-reaper/)
 
 
 ## Usage
@@ -33,17 +31,21 @@ Docker image: [https://registry.hub.docker.com/u/sstarcher/job-reaper/]
 
 Alerters are define in the configuration yaml file.  All alerters that are define will be used.
 
-###Stdout
+### Stdout
+
 * Level - debug, info, warn, error, fatal, panic
+
 ```yaml
 stdout:
     level: info
 ```
 
-###Sensu
- Sensu has a special templates map that allows for adhoc key/value pairs to be passed to sensu.  The values are processed through golangs templating engine are are URL encoded.  Alerts in uchiwa show up as JIT clients via the name Jobs-NAMESPACE, where namespace is the kubernetes namespace the job was running under.
+### Sensu
 
- The values availble for the template engine are as follows
+Sensu has a special templates map that allows for adhoc key/value pairs to be passed to sensu.  The values are processed through golangs templating engine are are URL encoded.  Alerts in uchiwa show up as JIT clients via the name Jobs-NAMESPACE, where namespace is the kubernetes namespace the job was running under.
+
+The values availble for the template engine are as follows
+
 *  Name
 *  Message
 *  Status
@@ -53,7 +55,9 @@ stdout:
 *  Namespace
 
 ## Examples
+
 ### Alerter Config
+
 ```yaml
 sensu:
     address: localhost:3030
@@ -65,6 +69,7 @@ stdout:
 ```
 
 ### Kubernetes Pod Definition
+
 ```yaml
 apiVersion: extensions/v1beta1
 kind: Deployment
