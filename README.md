@@ -86,3 +86,18 @@ spec:
       - name: job-reaper
         image: sstarcher/job-reaper:latest
 ```
+
+## Development
+
+The following will get you setup for local development:
+
+```sh
+mkdir -p $GOPATH/github/sstarcher
+cd $GOPATH/github/sstarcher
+git clone https://github.com/sstarcher/job-reaper.git
+minikube start
+eval $(minikube docker-env)
+cp examples/stdout.yaml config.yaml
+make docker
+kubectl apply -f examples/job-reaper.yaml
+```
