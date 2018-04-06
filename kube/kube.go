@@ -37,6 +37,7 @@ type kubeClient struct {
 	numReapers            int
 	bufferDepth           int
 	ignoreOwned           bool
+	sendErrorOnFailure    bool
 }
 
 type byCompletion []batch.Job
@@ -64,6 +65,7 @@ func (bc byCompletion) Swap(i, j int) {
 func NewKubeClient(masterURL string, maxFailures int,
 	keepCompletedDuration time.Duration,
 	ignoreOwned bool,
+	sendErrorOnFailure bool,
 	alerters *[]alert.Alert, reaperCount, bufferDepth int) Client {
 	config, err := clientcmd.BuildConfigFromFlags(masterURL, "")
 	if err != nil {
@@ -84,6 +86,7 @@ func NewKubeClient(masterURL string, maxFailures int,
 		numReapers:            reaperCount,
 		bufferDepth:           bufferDepth,
 		ignoreOwned:           ignoreOwned,
+		sendErrorOnFailure:    sendErrorOnFailure,
 	}
 }
 
@@ -94,6 +97,7 @@ func (kube *kubeClient) reap(job batch.Job) {
 		Status:    "Unknown",
 		Message:   "",
 		Config:    job.GetAnnotations(),
+		Level:     alert.AlertInfo,
 	}
 
 	pods, err := kube.jobPods(job)
@@ -148,12 +152,7 @@ func (kube *kubeClient) reap(job batch.Job) {
 		data.EndTime = time.Now()
 	}
 
-	for _, alert := range *kube.alerters {
-		err := alert.Send(data)
-		if err != nil {
-			log.Error(err.Error())
-		}
-	}
+	kube.sendAlert(data)
 
 	go func() {
 		err := kube.clientset.Batch().Jobs(data.Namespace).Delete(job.GetName(), nil)
@@ -161,14 +160,15 @@ func (kube *kubeClient) reap(job batch.Job) {
 			log.Error(err.Error())
 		}
 
-		log.Debugln("Deleting pods for ", data.Name)
+		log.Debugf("Deleting pods for %s", data.Name)
+		numPods := len(pods.Items)
 		for _, pod := range pods.Items {
 			err := kube.clientset.Core().Pods(data.Namespace).Delete(pod.GetName(), nil)
 			if err != nil {
 				log.Error(err.Error())
 			}
 		}
-		log.Debugln("Done deleting pods for ", data.Name)
+		log.Infof("Deleted %d pods for %s", numPods, data.Name)
 	}()
 }
 
@@ -209,6 +209,29 @@ func (kube *kubeClient) oldestPod(pods *v1.PodList) v1.Pod {
 		}
 	}
 	return tempPod
+}
+
+func (kube *kubeClient) fail(job batch.Job, condition batch.JobCondition) {
+
+	data := alert.Data{
+		Name:      job.ObjectMeta.GetLabels()["run"],
+		Namespace: job.GetNamespace(),
+		Status:    fmt.Sprintf("%v", condition.Type),
+		Message:   condition.Message,
+		Config:    job.GetAnnotations(),
+		Level:     alert.AlertError,
+	}
+
+	kube.sendAlert(data)
+}
+
+func (kube *kubeClient) sendAlert(data alert.Data) {
+	for _, alert := range *kube.alerters {
+		err := alert.Send(data)
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}
 }
 
 func reaper(kube *kubeClient, jobs <-chan batch.Job, done <-chan struct{}) {
@@ -262,8 +285,24 @@ func (kube *kubeClient) reapNamespace(namespace string, jobQueue chan<- batch.Jo
 	sort.Sort(byCompletion(jobs.Items))
 
 	for _, job := range jobs.Items {
-		if kube.shouldReap(job) {
-			jobQueue <- job
+
+		condition := getJobCondition(job)
+		if condition == nil {
+			log.Debugf("Got empty condition for %s", job.ObjectMeta.Name)
+			continue
+		}
+
+		switch condition.Type {
+		case batch.JobFailed:
+			if kube.sendErrorOnFailure {
+				kube.fail(job, *condition)
+			}
+		case batch.JobComplete:
+			if kube.shouldReap(job) {
+				jobQueue <- job
+			}
+		default:
+			// noop
 		}
 	}
 }
@@ -289,6 +328,15 @@ func (kube *kubeClient) shouldReap(job batch.Job) bool {
 	}
 
 	return true
+}
+
+func getJobCondition(job batch.Job) *batch.JobCondition {
+	for _, c := range job.Status.Conditions {
+		if (c.Type == batch.JobComplete || c.Type == batch.JobFailed) && c.Status == v1.ConditionTrue {
+			return &c
+		}
+	}
+	return nil
 }
 
 func getJobCompletions(job batch.Job) int {

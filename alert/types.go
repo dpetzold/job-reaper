@@ -10,6 +10,13 @@ type Alert interface {
 	Validate() error
 }
 
+type AlertLevelType string
+
+const (
+	AlertError AlertLevelType = "Error"
+	AlertInfo  AlertLevelType = "Info"
+)
+
 // Data structure available for the alerter
 type Data struct {
 	Name      string
@@ -20,4 +27,5 @@ type Data struct {
 	ExitCode  int
 	Namespace string
 	Config    map[string]string
+	Level     AlertLevelType
 }

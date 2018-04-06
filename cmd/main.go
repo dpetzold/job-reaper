@@ -22,6 +22,7 @@ var (
 	reaperCount           = flag.Int("reapers", 2, "Number of reaper routines to run")
 	bufferRatio           = flag.Int("buffer", 1, "Multiplier for buffer size compared to reaper count.")
 	ignoreOwned           = flag.Bool("ignore-owned", false, "ignore jobs owned by other objects (e.g. CronJobs)")
+	sendErrorOnFailure    = flag.Bool("failure-alerts", false, "Send error notifications on job failures")
 )
 
 func main() {
@@ -47,7 +48,7 @@ func main() {
 	}
 
 	kube := kube.NewKubeClient(*masterURL, *failures, *keepCompletedDuration,
-		*ignoreOwned, alerters, *reaperCount, *bufferRatio)
+		*ignoreOwned, *sendErrorOnFailure, alerters, *reaperCount, *bufferRatio)
 
 	log.Infof("job-reaper running (%s)", GitCommit)
 

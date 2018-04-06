@@ -26,6 +26,7 @@ Docker image: [https://registry.hub.docker.com/u/sstarcher/job-reaper/](https://
 * `-log` - Level to log - debug, info, warn, error, fatal, panic (default info)
 * `-keep-completed=*duration*` - Duration to keep completed jobs (e.g. `-keep-completed=4h`).
 * `-ignore-owned` - Ignore jobs owned by other resources, e.g. by `CronJob`s (which have their own reaping logic).
+* `-failure-alerts`: Send error notifications on job failures
 
 ## Alerter options
 
@@ -33,7 +34,7 @@ Alerters are define in the configuration yaml file.  All alerters that are defin
 
 ### Stdout
 
-* Level - debug, info, warn, error, fatal, panic
+* Level - info, error
 
 ```yaml
 stdout:
