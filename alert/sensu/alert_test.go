@@ -1,10 +1,11 @@
 package sensu
 
 import (
-	"github.com/sstarcher/job-reaper/alert"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/sstarcher/job-reaper/alert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSensu(t *testing.T) {

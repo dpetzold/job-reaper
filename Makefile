@@ -16,6 +16,9 @@ clean:
 test: vendor
 	go test -v $(TEST)
 
+fmt: $(GO_SOURCE_FILES)
+	goimports -w $(GO_SOURCE_FILES)
+
 build: vendor $(GO_SOURCE_FILES)
 	go build -o build/job-reaper cmd/main.go
 

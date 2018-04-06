@@ -6,13 +6,14 @@ import (
 	"errors"
 
 	"fmt"
-	"github.com/sstarcher/job-reaper/alert"
 	"io/ioutil"
 	"net"
 	"net/url"
 	"regexp"
 	"text/template"
 	"time"
+
+	"github.com/sstarcher/job-reaper/alert"
 )
 
 var validNamePattern = regexp.MustCompile(`^[\w\.-]+$`)

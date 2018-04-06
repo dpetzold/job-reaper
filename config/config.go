@@ -1,15 +1,16 @@
 package config
 
 import (
+	"io/ioutil"
+	"os"
+	"reflect"
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/sstarcher/job-reaper/alert"
 	"github.com/sstarcher/job-reaper/alert/sensu"
 	"github.com/sstarcher/job-reaper/alert/stdout"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"os"
-	"reflect"
-	"strings"
 )
 
 // Config data for alerters

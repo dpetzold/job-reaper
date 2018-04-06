@@ -3,6 +3,7 @@ package stdout
 import (
 	"errors"
 	"fmt"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/sstarcher/job-reaper/alert"
 )
