@@ -1,5 +1,6 @@
 TEST? = $$(glide nv)
 
+GIT_COMMIT = $(shell git rev-parse HEAD)
 GO_SOURCE_FILES = $(shell find . -type f -name "*.go" | grep -v /vendor/)
 
 vendor:
@@ -8,7 +9,7 @@ vendor:
 all: vendor build test docker
 
 docker:
-	docker build .
+	docker build -t job-reaper .
 
 clean:
 	rm -rf build
@@ -20,7 +21,7 @@ fmt: $(GO_SOURCE_FILES)
 	goimports -w $(GO_SOURCE_FILES)
 
 build: vendor $(GO_SOURCE_FILES)
-	go build -o build/job-reaper cmd/main.go
+	go build -a -ldflags "-X main.GitCommit=${GIT_COMMIT} -extldflags '-static'" -o build/job-reaper cmd/main.go
 
 run: build
 	./build/job-reaper --config=./myconfig.yaml --master=localhost:8080 --failures=0
@@ -38,7 +39,7 @@ jobs: kube_clean
 	kubectl run succeed --schedule="*/5 * * * ?" --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle 'print bpi(2000)'
 	# Always Fail
 	kubectl run always-fail --schedule="*/1 * * * ?" --image=busybox --restart=Never -- /bin/sh -c 'sleep 10; exit 5'
-	kubectl annotate always-fail succeed job-reaper.github.sstarcher.io/channel='#listhub-syseng-status'
+	kubectl annotate po always-fail succeed job-reaper.github.sstarcher.io/channel='#listhub-syseng-status'
 	# Image pull Error
 	#kubectl run image-pull-error --schedule="*/1 * * * ?" --image=buxybox --restart=Never -- /bin/sh
 	# RunContainerError

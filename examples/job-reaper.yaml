@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-reaper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: job-reaper
+  template:
+    metadata:
+      labels:
+        name: job-reaper
+    spec:
+      containers:
+      - name: job-reaper
+        image: job-reaper:latest
+        imagePullPolicy: IfNotPresent

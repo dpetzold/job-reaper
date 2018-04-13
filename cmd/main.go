@@ -9,6 +9,9 @@ import (
 	"github.com/sstarcher/job-reaper/kube"
 )
 
+// The git commit that was compiled. This will be filled in by the compiler.
+var GitCommit string
+
 var (
 	masterURL             = flag.String("master", "", "url to kubernetes api server")
 	configPath            = flag.String("config", "./config.yaml", "path to alerter configuration")
@@ -45,6 +48,8 @@ func main() {
 
 	kube := kube.NewKubeClient(*masterURL, *failures, *keepCompletedDuration,
 		*ignoreOwned, alerters, *reaperCount, *bufferRatio)
+
+	log.Infof("job-reaper running (%s)", GitCommit)
 
 	everyTime := time.Duration(*interval) * time.Second
 	for {
