@@ -55,6 +55,16 @@ The values availble for the template engine are as follows
 *  ExitCode
 *  Namespace
 
+### Sentry
+
+* DSN - Sentry DNS
+
+```yaml
+sentry:
+    dsn: https://dsn
+```
+
+
 ## Examples
 
 ### Alerter Config
@@ -67,17 +77,22 @@ sensu:
       anykey: "{{ .ExitCode }}"
 stdout:
     level: info
+sentry:
+    dns: https://dns
 ```
 
 ### Kubernetes Pod Definition
 
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: job-reaper
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: job-reaper
   template:
     metadata:
       labels:

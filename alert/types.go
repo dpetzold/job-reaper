@@ -21,6 +21,7 @@ const (
 type Data struct {
 	Name      string
 	Message   string
+	Reason    string
 	Status    string
 	StartTime time.Time
 	EndTime   time.Time

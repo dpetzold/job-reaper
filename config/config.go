@@ -9,6 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/sstarcher/job-reaper/alert"
 	"github.com/sstarcher/job-reaper/alert/sensu"
+	"github.com/sstarcher/job-reaper/alert/sentry"
 	"github.com/sstarcher/job-reaper/alert/stdout"
 	"gopkg.in/yaml.v2"
 )
@@ -17,6 +18,7 @@ import (
 type Config struct {
 	Sensu  sensu.Service
 	Stdout stdout.Service
+	Sentry sentry.Service
 }
 
 var defaultConfig = []byte(`
@@ -50,6 +52,7 @@ func load(data []byte) *[]alert.Alert {
 	var alerters = &[]alert.Alert{}
 	process(config.Stdout, alerters)
 	process(config.Sensu, alerters)
+	process(config.Sentry, alerters)
 
 	return alerters
 }

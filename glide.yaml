@@ -3,3 +3,4 @@ import:
 - package: github.com/Sirupsen/logrus
 - package: k8s.io/client-go
   version: v7.0.0
+- package: github.com/getsentry/raven-go

@@ -217,6 +217,7 @@ func (kube *kubeClient) fail(job batch.Job, condition batch.JobCondition) {
 		Name:      job.ObjectMeta.GetLabels()["run"],
 		Namespace: job.GetNamespace(),
 		Status:    fmt.Sprintf("%v", condition.Type),
+		Reason:    condition.Reason,
 		Message:   condition.Message,
 		Config:    job.GetAnnotations(),
 		Level:     alert.AlertError,
