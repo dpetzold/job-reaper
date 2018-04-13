@@ -29,7 +29,7 @@ mini:
 	minikube ip || $$(pkill -9 -f 'kubectl proxy'; minikube start; kubectl proxy --port=8080 &)
 
 kube_clean: mini
-	kubectl delete scheduledjobs --all
+	kubectl delete cronjobs --all
 	kubectl delete jobs --all
 	kubectl delete pods --all
 

@@ -7,21 +7,21 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"k8s.io/client-go/1.4/kubernetes"
-	"k8s.io/client-go/1.4/pkg/api"
-	apiErrors "k8s.io/client-go/1.4/pkg/api/errors"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 
-	"k8s.io/client-go/1.4/pkg/api/v1"
-	"k8s.io/client-go/1.4/pkg/labels"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/util/sets"
 
-	"k8s.io/client-go/1.4/pkg/selection"
-	"k8s.io/client-go/1.4/pkg/util/sets"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"k8s.io/client-go/1.4/pkg/fields"
-	"k8s.io/client-go/1.4/tools/clientcmd"
+	batch "k8s.io/api/batch/v1"
+	"k8s.io/api/core/v1"
 
 	"github.com/sstarcher/job-reaper/alert"
-	batch "k8s.io/client-go/1.4/pkg/apis/batch/v1"
 )
 
 // Client Interface for reaping
@@ -53,7 +53,7 @@ func (bc byCompletion) Less(i, j int) bool {
 	if bc[j].Status.CompletionTime == nil {
 		return true
 	}
-	return bc[i].Status.CompletionTime.Before(*bc[j].Status.CompletionTime)
+	return bc[i].Status.CompletionTime.Before(bc[j].Status.CompletionTime)
 }
 
 func (bc byCompletion) Swap(i, j int) {
@@ -175,12 +175,12 @@ func (kube *kubeClient) reap(job batch.Job) {
 func (kube *kubeClient) jobPods(job batch.Job) (*v1.PodList, error) {
 	controllerUID := job.Spec.Selector.MatchLabels["controller-uid"]
 	selector := labels.NewSelector()
-	requirement, err := labels.NewRequirement("controller-uid", selection.Equals, sets.NewString(controllerUID))
+	requirement, err := labels.NewRequirement("controller-uid", selection.Equals, sets.NewString(controllerUID).List())
 	if err != nil {
 		log.Panic(err.Error())
 	}
 	selector = selector.Add(*requirement)
-	pods, err := kube.clientset.Core().Pods(job.ObjectMeta.Namespace).List(api.ListOptions{LabelSelector: selector})
+	pods, err := kube.clientset.Core().Pods(job.ObjectMeta.Namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		log.Error(err.Error())
 	}
@@ -193,8 +193,8 @@ func (kube *kubeClient) podEvents(pod v1.Pod) *v1.EventList {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	events, err := kube.clientset.Core().Events(pod.ObjectMeta.Namespace).List(api.ListOptions{
-		FieldSelector: sel,
+	events, err := kube.clientset.Core().Events(pod.ObjectMeta.Namespace).List(metav1.ListOptions{
+		FieldSelector: sel.String(),
 	})
 	return events
 }
@@ -225,7 +225,7 @@ func reaper(kube *kubeClient, jobs <-chan batch.Job, done <-chan struct{}) {
 }
 
 func (kube *kubeClient) Reap() {
-	namespaces, err := kube.clientset.Core().Namespaces().List(api.ListOptions{})
+	namespaces, err := kube.clientset.Core().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
 		log.Panic(err.Error())
 	}
@@ -254,7 +254,7 @@ func (kube *kubeClient) Reap() {
 }
 
 func (kube *kubeClient) reapNamespace(namespace string, jobQueue chan<- batch.Job) {
-	jobs, err := kube.clientset.Batch().Jobs(namespace).List(api.ListOptions{})
+	jobs, err := kube.clientset.Batch().Jobs(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		log.Panic(err.Error())
 	}
